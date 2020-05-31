@@ -30,7 +30,7 @@ app = Flask(__name__)
 # Load our model into memory.
 # Please update this path to reflect your own trained model.
 static_model = load_model(
-    path_to_model='assets/trained-models/sendy_simple_lm_regression.pkl')
+    path_to_model='assets/trained-models/team7_sendy_simple_lm_regression.pkl')
 
 print ('-'*40)
 print ('Model succesfully loaded')
@@ -47,6 +47,7 @@ def model_prediction():
     # We then preprocess our data, and use our pretrained model to make a
     # prediction.
     output = make_prediction(data, static_model)
+    print(output)
     # We finally package this prediction as a JSON object to deliver a valid
     # response with our API.
     return jsonify(output)

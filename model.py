@@ -49,7 +49,7 @@ def _preprocess_data(data):
     feature_vector_dict = json.loads(data)
     # Load the dictionary as a Pandas DataFrame.
     feature_vector_df = pd.DataFrame.from_dict([feature_vector_dict])
-
+    
     # ---------------------------------------------------------------
     # NOTE: You will need to swap the lines below for your own data
     # preprocessing methods.
@@ -59,11 +59,105 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Pickup Lat','Pickup Long',
-                                        'Destination Lat','Destination Long']]
+    feature_vector_df = feature_vector_df.drop(['Vehicle Type', 'Temperature', 
+                                                'Precipitation in millimeters' ], 
+                                                 axis = 1)
+    feature_vector_df = feature_vector_df.drop(['User Id', 'Platform Type'], 
+                                                 axis = 1)
+
+    def dummy_encode_columns(input_df, column_name):
+        dummy_df = pd.get_dummies(input_df, columns = [column_name], drop_first = True)
+        return dummy_df
+
+    feature_vector_df = dummy_encode_columns(feature_vector_df, 'Personal or Business')
+
+    feature_vector_df = feature_vector_df.drop(['Placement - Weekday (Mo = 1)',
+                                  'Confirmation - Weekday (Mo = 1)',
+                                  'Arrival at Pickup - Weekday (Mo = 1)',
+                                  'Pickup - Weekday (Mo = 1)'], axis = 1)
+
+    feature_vector_df = feature_vector_df.drop(['Confirmation - Day of Month',
+                                  'Placement - Day of Month',
+                                  "Arrival at Pickup - Day of Month",
+                                  'Pickup - Day of Month'], axis = 1)
+    
+    testing_time_cols = ['Placement - Time', 'Confirmation - Time', 'Arrival at Pickup - Time', 
+                      'Pickup - Time']
+
+    def haversine(lat1, lon1, lat2, lon2, to_radians = True, earth_radius = 6371):
+        """
+        Modified version: of http://stackoverflow.com/a/29546836/2901002
+
+        Calculate the great circle distance between two points
+        on the earth (specified in decimal degrees or in radians)
+
+        All (lat, lon) coordinates must have numeric dtypes and be of equal length.
+
+        """
+        if to_radians:
+            lat1, lon1, lat2, lon2 = np.radians([lat1, lon1, lat2, lon2])
+
+        a = np.sin((lat2-lat1)/2.0)**2 + \
+            np.cos(lat1) * np.cos(lat2) * np.sin((lon2-lon1)/2.0)**2
+
+        return earth_radius * 2 * np.arcsin(np.sqrt(a))
+
+    feature_vector_df['Distance'] = haversine(feature_vector_df['Pickup Lat'], 
+                                feature_vector_df['Pickup Long'],
+                                feature_vector_df['Destination Lat'], 
+                                feature_vector_df['Destination Long'])
+
+    for time in testing_time_cols:
+        feature_vector_df[time] = pd.to_datetime(feature_vector_df[time])
+
+    feature_vector_df['Time Difference - Placement to Confirmation'] = (
+        (feature_vector_df['Confirmation - Time'] - feature_vector_df['Placement - Time'])
+        .dt.total_seconds()
+    )
+
+    feature_vector_df['Time Difference - Confirmation to Arrival at Pickup'] = (
+        (feature_vector_df['Arrival at Pickup - Time'] - feature_vector_df['Confirmation - Time'])
+        .dt.total_seconds()
+    )
+
+    feature_vector_df['Time Difference - Arrival at Pickup to Pickup'] = (
+        (feature_vector_df['Pickup - Time'] - feature_vector_df['Arrival at Pickup - Time'])
+        .dt.total_seconds()
+    ) 
+
+    feature_vector_df = feature_vector_df.drop(['Placement - Time', 'Confirmation - Time', 
+                                'Arrival at Pickup - Time', 'Pickup - Time'], axis = 1)
+    
+    def extract_id(input_df):
+        input_df['Rider Id'] = input_df['Rider Id'].str.extract(r"([0-9]+)").astype(int)
+        return input_df
+
+    extract_id(feature_vector_df)
+
+    feature_vector_df = feature_vector_df.drop(['Distance (KM)', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
+    feature_vector_df = feature_vector_df.drop(['Order No', 'Rider Id'], axis=1)
+
+    from sklearn.preprocessing import MinMaxScaler
+
+    mms = MinMaxScaler(feature_range=(0, 1))
+    mms.fit(feature_vector_df)
+    feature_vector_df = mms.transform(feature_vector_df)
+
+    #print(feature_vector_df.columns.tolist())
+
+    # predict_vector = feature_vector_df[['Pickup Lat',
+    #                                     'Pickup Long',
+    #                                     'Destination Lat',
+    #                                     'Destination Long',
+    #                                     'Age',
+    #                                     'Average_Rating',
+    #                                     'Personal or Business_Personal',
+    #                                     'Time Difference - Placement to Confirmation',
+    #                                     'Time Difference - Arrival at Pickup to Pickup',
+    #                                     'Distance']]
     # ------------------------------------------------------------------------
 
-    return predict_vector
+    return feature_vector_df
 
 def load_model(path_to_model:str):
     """Adapter function to load our pretrained model into memory.
@@ -101,7 +195,9 @@ def make_prediction(data, model):
     """
     # Data preprocessing.
     prep_data = _preprocess_data(data)
+    
     # Perform prediction with model and preprocessed data.
     prediction = model.predict(prep_data)
+    
     # Format as list for output standerdisation.
-    return prediction[0].tolist()
+    return prediction.tolist()

@@ -1,3 +1,15 @@
+# Team 7 - Cape Town - Regression (Task 2)
+## Problem Statement - Prediction of Delivery Time from Pickup to Arrival
+
+## Team Members
+Karin Louw
+Maddy Muir
+Mikael Daniels
+Ava Kanaye
+
+## Refrences for Model Building
+(https://github.com/Maddy-Muir/team_7_regression)
+
 # Flask-based Model API
 #### EXPLORE Data Science Academy Regression Predict
 

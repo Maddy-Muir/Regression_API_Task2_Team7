@@ -67,11 +67,10 @@ def _preprocess_data(data):
                                                  axis = 1)
 
     def dummy_encode_columns(input_df, column_name):
-        dummy_df = pd.get_dummies(input_df, columns=[column_name], drop_first=True)
+        dummy_df = pd.get_dummies(input_df, columns = [column_name], drop_first = True)
         return dummy_df
 
     feature_vector_df = dummy_encode_columns(feature_vector_df, 'Personal or Business')
-    print(feature_vector_df.columns)
 
     feature_vector_df = feature_vector_df.drop(['Placement - Weekday (Mo = 1)',
                                   'Confirmation - Weekday (Mo = 1)',
@@ -114,10 +113,8 @@ def _preprocess_data(data):
 
     extract_id(feature_vector_df)
 
-    print(list(feature_vector_df.columns))
-
-    final_features = ['Order No', 'Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
-       'Rider Id', 'Age', 'Average_Rating','Personal or Business_Business',
+    final_features = ['Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
+       'Rider Id', 'Age', 'Average_Rating',
        'Time Difference - Placement to Confirmation',
        'Time Difference - Arrival at Pickup to Pickup', 
        'Distance (KM)']

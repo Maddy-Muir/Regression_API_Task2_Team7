@@ -63,15 +63,12 @@ time_df[['Arrival_at_Pickup_Hour','Arrival_at_Pickup_Minute','Arrival_at_Pickup_
 time_df[['Pickup_Hour','Pickup_Minute','Pickup_Seconds']] = time_df['Pickup - Time'].astype(str).str.split(':', expand=True).astype(int)
 
 training_df = training_df.drop(['User Id', 'Platform Type'], axis = 1)
-print(training_df.columns)
 
 def dummy_encode_columns(input_df, column_name):
     dummy_df = pd.get_dummies(input_df, columns = [column_name], drop_first = True)
     return dummy_df
 
 training_df = dummy_encode_columns(training_df, 'Personal or Business')
-print(training_df.columns)
-exit()
 
 def diff_check_drop_col(df, col_1, col_2):
   diff_check_drop_col = df[col_1] - df[col_2]
@@ -154,9 +151,8 @@ speed_df = speed_df.filter(['Pickup Lat', 'Pickup Long', 'Destination Lat',
 
 final_features = speed_df.drop(['Distance', 'Time Difference - Confirmation to Arrival at Pickup', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
 
-final_features = final_features.filter(['Order No', 'Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
-       'Rider Id', 'Age', 'Average_Rating','Personal or Business_Personal',
-       'Time Difference - Placement to Confirmation',
+final_features = final_features.filter(['Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
+       'Rider Id', 'Age', 'Average_Rating','Time Difference - Placement to Confirmation',
        'Time Difference - Arrival at Pickup to Pickup', 
        'Distance (KM)', 'Speed (KM/H)', 'Time from Pickup to Arrival'], axis=1)
 
@@ -228,9 +224,9 @@ gradient_boosted_rmse = fit_and_evaluate(gradient_boosted)
 
 #Catboost
 catboost = CatBoostRegressor(logging_level='Silent')
-catboost_rmse = fit_and_evaluate(gradient_boosted)
+catboost_rmse = fit_and_evaluate(catboost)
 
-
+    
 def train_and_validate(columns, model):
      features = final_features[columns]
      target = final_features['Time from Pickup to Arrival']

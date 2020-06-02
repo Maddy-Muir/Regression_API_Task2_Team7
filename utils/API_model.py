@@ -55,37 +55,12 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 """# Import Data"""
 
 train_df = pd.read_csv('https://raw.githubusercontent.com/Maddy-Muir/team_7_regression/master/Data/Train.csv')
-test_df = pd.read_csv('https://raw.githubusercontent.com/Maddy-Muir/team_7_regression/master/Data/Test.csv')
 riders_df = pd.read_csv('https://raw.githubusercontent.com/Maddy-Muir/team_7_regression/master/Data/Riders.csv')
 sample_df = pd.read_csv('https://raw.githubusercontent.com/Maddy-Muir/team_7_regression/master/Data/SampleSubmission.csv')
 variable_def = pd.read_csv('https://raw.githubusercontent.com/Maddy-Muir/team_7_regression/master/Data/VariableDefinitions.csv')
 
-"""Display top of tables to get familiar with data"""
-
-riders_df.head()
-
-train_df.head()
-
-test_df.head()
-
-sample_df.head()
-
-"""# See Description of Data Tables"""
-
-train_df.info()
-
-test_df.info()
-
-variable_def
-
-"""# Joining DataFrames
-
-Join riders_df to test_df and train_df
-"""
 
 training_df = pd.merge(train_df, riders_df, how = 'inner', on = 'Rider Id')
-
-testing_df = pd.merge(test_df, riders_df, how = 'inner', on = 'Rider Id')
 
 """#Checking for duplicates"""
 
@@ -99,66 +74,8 @@ Check percentage of null values in each column in order to eliminate columns wit
 columns = training_df.columns
 percent_missing_values = training_df.isnull().sum()/len(training_df.index)*100
 missing_value_df = pd.DataFrame({'column_name': columns,'percent_missing': percent_missing_values})
-missing_value_df
-
-"""## Drop columns which are not relevant
-
-Precipitation in millimeters - 97.4% Null values
-
-Temerature at time of order placement - Not relevant
-
-Vehicle type - String for all rows are identical = 'Bike'
-"""
 
 training_df = training_df.drop(['Vehicle Type', 'Temperature', 'Precipitation in millimeters' ], axis = 1)
-
-testing_df = testing_df.drop(['Vehicle Type', 'Temperature', 'Precipitation in millimeters' ], axis = 1)
-
-training_df.head()
-
-testing_df.head()
-
-"""#Platform type analysis
-Rare labels
-"""
-
-# #Plot frequency table of rare labels
-# cat_cols = ['Platform Type']
-# total_cols = len(training_df)
-
-# for col in cat_cols:
-
-#       temp_df = pd.Series(training_df[col].value_counts() / total_cols)
-#       fig = temp_df.sort_values(ascending=False).plot.bar()
-#       fig.set_xlabel(col)
-#       print(temp_df)
-
-#       fig.set_ylabel('Percentage of platforms')
-#       plt.show()
-
-# """#Order analysis"""
-
-# #Weekday of most orders
-# cat_cols = ['Placement - Day of Month']
-
-# for col in cat_cols:
-
-#   order_df = pd.Series(training_df[col].value_counts())
-#   fig = order_df.sort_index().plot.bar()
-#   fig.set_xlabel(col)
-#   fig.set_ylabel('Count of Placement Day of Month')
-#   plt.show()
-
-# #Weekday of most orders
-# cat_cols = ['Placement - Weekday (Mo = 1)']
-
-# for col in cat_cols:
-
-#   order_df = pd.Series(training_df[col].value_counts())
-#   fig = order_df.sort_index().plot.bar()
-#   fig.set_xlabel(col)
-#   fig.set_ylabel('Count of Placement weekday')
-#   plt.show()
 
 #Extract time
 time_df = training_df.copy()
@@ -177,38 +94,9 @@ time_df[['Pickup_Hour','Pickup_Minute','Pickup_Seconds']] = time_df['Pickup - Ti
 #Hour of day with most orders
 time_cols = ['Placement_Hour']
 
-# for col in time_cols:
-  
-#   time_eda = pd.Series(time_df[col].value_counts())
-#   fig = time_eda.sort_index().plot.bar()
-#   fig.set_xlabel(col)
-#   fig.set_ylabel('Order Count of Placement Hour')
-#   plt.show()
-
-# #Hour of day with most pickpus
-# time_cols = ['Pickup_Hour']
-
-# for col in time_cols:
-  
-#   time_eda = pd.Series(time_df[col].value_counts())
-#   fig = time_eda.sort_index().plot.bar()
-#   fig.set_xlabel(col)
-#   fig.set_ylabel('Order Count of Pikcup Hour')
-#   plt.show()
-
-"""# Delete additional columns not releveant to model building
-
-Order No, User Id, Platform Type - 
-Does not provide any information to assist in the prediction of delivery time from picking up the package to delivery.
-"""
 
 training_df = training_df.drop(['User Id', 'Platform Type'], axis = 1)
 
-training_df.head()
-
-testing_df = testing_df.drop(['User Id', 'Platform Type'], axis = 1)
-
-testing_df.head()
 
 """# Dummy Encoding Function"""
 
@@ -220,7 +108,6 @@ def dummy_encode_columns(input_df, column_name):
 
 training_df = dummy_encode_columns(training_df, 'Personal or Business')
 
-testing_df = dummy_encode_columns(testing_df, 'Personal or Business')
 
 """# Comparing 'Day of Month'
 
@@ -237,47 +124,12 @@ def diff_check_drop_col(df, col_1, col_2):
   return df
 
 training_df = diff_check_drop_col(training_df, "Confirmation - Day of Month", "Placement - Day of Month")
-
 training_df = diff_check_drop_col(training_df, "Arrival at Pickup - Day of Month", "Confirmation - Day of Month")
-
 training_df = diff_check_drop_col(training_df,"Pickup - Day of Month" ,"Arrival at Pickup - Day of Month")
-
 training_df = diff_check_drop_col(training_df,'Arrival at Destination - Day of Month',"Pickup - Day of Month")
-
-training_df.head()
-
 training_df = training_df.drop(["Arrival at Destination - Day of Month"], axis = 1)
-
-training_df.head()
-
-"""#Drop all weekday columns - not relevant as all Day of Month columns were dropped
-
-Drop: 
-
-Placement - Weekday (Mo = 1)
-
-Confirmation - Weekday (Mo = 1)	
-
-Arrival at Pickup - Weekday (Mo = 1)	
-
-Pickup - Weekday (Mo = 1)	
-
-Arrival at Destination - Weekday (Mo = 1)
-"""
-
 training_df = training_df.drop(['Placement - Weekday (Mo = 1)','Confirmation - Weekday (Mo = 1)','Arrival at Pickup - Weekday (Mo = 1)',
                           'Pickup - Weekday (Mo = 1)','Arrival at Destination - Weekday (Mo = 1)'], axis = 1)
-
-training_df.head()
-
-testing_df = testing_df.drop(['Placement - Weekday (Mo = 1)','Confirmation - Weekday (Mo = 1)','Arrival at Pickup - Weekday (Mo = 1)',
-                          'Pickup - Weekday (Mo = 1)'], axis = 1)
-
-testing_df = testing_df.drop(['Confirmation - Day of Month','Placement - Day of Month',"Arrival at Pickup - Day of Month",
-                          'Pickup - Day of Month'], axis = 1)
-
-print(testing_df.columns)
-#testing_df.head()
 
 """# Check Correlations & Change Time Format"""
 
@@ -290,105 +142,19 @@ training_time_cols = ['Placement - Time', 'Confirmation - Time', 'Arrival at Pic
 for time in training_time_cols:
     training_df[time] = pd.to_datetime(training_df[time])
 
-training_df.head()
-
 training_df['Time Difference - Placement to Confirmation'] = (training_df['Confirmation - Time'] - training_df['Placement - Time']).dt.total_seconds()
-
-training_df.head()
-
 training_df['Time Difference - Confirmation to Arrival at Pickup'] = (training_df['Arrival at Destination - Time'] - training_df['Confirmation - Time']).dt.total_seconds()
-
-training_df.head()
-
 training_df['Time Difference - Arrival at Pickup to Pickup'] = (training_df['Pickup - Time'] - training_df['Arrival at Pickup - Time']).dt.total_seconds()
-
-training_df.head()
-
 training_df['Time Difference - Pickup to Arrival at Destination'] = (training_df['Arrival at Destination - Time'] - training_df['Pickup - Time']).dt.total_seconds()
-
-training_df.head()
-
-testing_time_cols = ['Placement - Time', 'Confirmation - Time', 'Arrival at Pickup - Time', 
-                      'Pickup - Time']
-
-for time in testing_time_cols:
-    testing_df[time] = pd.to_datetime(testing_df[time])
-
-testing_df['Time Difference - Placement to Confirmation'] = (testing_df['Confirmation - Time'] - testing_df['Placement - Time']).dt.total_seconds()
-
-testing_df['Time Difference - Confirmation to Arrival at Pickup'] = (testing_df['Arrival at Pickup - Time'] - testing_df['Confirmation - Time']).dt.total_seconds()
-
-testing_df['Time Difference - Arrival at Pickup to Pickup'] = (testing_df['Pickup - Time'] - testing_df['Arrival at Pickup - Time']).dt.total_seconds()
-
-testing_df.head()
-
-"""# Drop Time columns
-
-Drop the following columns:
-
-Placement - Time
-
-Confirmation - Time
-
-Arrival at Pickup - Time	
-
-Pickup - Time	
-
-Arrival at Destination - Time
-"""
 
 training_df = training_df.drop(['Placement - Time', 'Confirmation - Time', 
                                 'Arrival at Pickup - Time', 'Pickup - Time', 
                                 'Arrival at Destination - Time'], axis = 1)
 
-training_df.head()
-
-testing_df = testing_df.drop(['Placement - Time', 'Confirmation - Time', 
-                                'Arrival at Pickup - Time', 'Pickup - Time'], axis = 1)
-
-testing_df.head()
-
 correlations = training_df[training_df.columns].corr()
 correlations['Time from Pickup to Arrival'].abs().sort_values()
 
 training_df = training_df.drop(['Time Difference - Pickup to Arrival at Destination'], axis = 1)
-
-training_df.head()
-
-"""##Harvesine Distance - Converting Longitude/Latitude to a value"""
-
-def haversine(lat1, lon1, lat2, lon2, to_radians = True, earth_radius = 6371):
-    """
-    Modified version: of http://stackoverflow.com/a/29546836/2901002
-
-    Calculate the great circle distance between two points
-    on the earth (specified in decimal degrees or in radians)
-
-    All (lat, lon) coordinates must have numeric dtypes and be of equal length.
-
-    """
-    if to_radians:
-        lat1, lon1, lat2, lon2 = np.radians([lat1, lon1, lat2, lon2])
-
-    a = np.sin((lat2-lat1)/2.0)**2 + \
-        np.cos(lat1) * np.cos(lat2) * np.sin((lon2-lon1)/2.0)**2
-
-    return earth_radius * 2 * np.arcsin(np.sqrt(a))
-
-
-training_df['Distance'] = haversine(training_df['Pickup Lat'], 
-                                training_df['Pickup Long'],
-                                training_df['Destination Lat'], 
-                                training_df['Destination Long'])
-
-training_df.head()
-
-testing_df['Distance'] = haversine(testing_df['Pickup Lat'], 
-                                testing_df['Pickup Long'],
-                                testing_df['Destination Lat'], 
-                                testing_df['Destination Long'])
-
-testing_df.head()
 
 """# Change Rider ID to only be a code"""
 
@@ -398,16 +164,6 @@ def extract_id(input_df):
 
 extract_id(training_df)
 
-extract_id(testing_df)
-
-"""## Target variable distribution"""
-
-figsize(6, 6)
-
-# Histogram of the Energy Star Score
-plt.hist(training_df['Time from Pickup to Arrival'].dropna(), bins = 50);
-plt.xlabel('Time from Pickup to Arrival'); plt.ylabel('Seconds'); 
-plt.title('Time from Pickup to Arrival distribution');
 
 training_df['Time from Pickup to Arrival'].describe()
 
@@ -483,8 +239,8 @@ speed_df = speed_df.filter(['Order No', 'Rider Id',
        'Personal or Business_Personal',
        'Time Difference - Placement to Confirmation',
        'Time Difference - Confirmation to Arrival at Pickup',
-       'Time Difference - Arrival at Pickup to Pickup',
-       'Distance', 'Speed (KM/H)','Distance (KM)', 'Pickup Lat', 'Pickup Long',
+       'Time Difference - Arrival at Pickup to Pickup', 'Speed (KM/H)',
+       'Distance (KM)', 'Pickup Lat', 'Pickup Long',
        'Destination Lat', 'Destination Long',
        'Time from Pickup to Arrival'], axis=1)
 
@@ -608,14 +364,14 @@ transformed_df.head(3)
 Boxcox method
 """
 
-#diagnostic_plots(transformed_df, 'Distance (KM)')
+diagnostic_plots(transformed_df, 'Distance (KM)')
 
 ##Box-Cox transformation
 transformed_df['Distance (KM)_boxcox'], param = stats.boxcox(transformed_df['Distance (KM)']) 
 
 print('Optimal λ: ', param)
 
-#diagnostic_plots(transformed_df, 'Distance (KM)_boxcox')
+diagnostic_plots(transformed_df, 'Distance (KM)_boxcox')
 
 transformed_df = transformed_df.drop(['Distance (KM)' ],axis=1)
 
@@ -624,19 +380,6 @@ transformed_df.head(3)
 """#Distance - Harvesine Distance 
 Boxcox Method
 """
-
-#diagnostic_plots(transformed_df, 'Distance')
-
-##Box-Cox transformation
-transformed_df['Distance_boxcox'], param = stats.boxcox(transformed_df['Distance']) 
-
-print('Optimal λ: ', param)
-
-#diagnostic_plots(transformed_df, 'Distance_boxcox')
-
-transformed_df = transformed_df.drop(['Distance'],axis=1)
-
-transformed_df.head(3)
 
 """#Speed
 Boxcox method
@@ -690,7 +433,7 @@ Remove features that are highly correlated
 transformed_df.head()
 
 #Based on above correlation matrix, dropping the following columns with correlation higher that 0.6:
-final_features = transformed_df.drop(['Distance (KM)', 'Time Difference - Confirmation to Arrival at Pickup', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
+final_features = transformed_df.drop(['Time Difference - Confirmation to Arrival at Pickup', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
 
 # fig, ax = plt.subplots(figsize=(10,8))
 # sns.heatmap(final_features.corr(), annot=True, annot_kws={"fontsize":10}, linewidths=.5, ax=ax)
@@ -698,21 +441,18 @@ final_features = transformed_df.drop(['Distance (KM)', 'Time Difference - Confir
 
 """Update Testing DataFrame accordingly"""
 
-testing_df = testing_df.drop(['Distance (KM)', 'Time Difference - Confirmation to Arrival at Pickup', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
 
 #Rearrange columns
 final_features = final_features.filter(['Order No', 'Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
        'Rider Id', 'Age', 'Average_Rating','Personal or Business_Personal',
        'Time Difference - Placement to Confirmation',
        'Time Difference - Arrival at Pickup to Pickup', 
-       'Distance', 'Speed (KM/H)', 'Time from Pickup to Arrival'], axis=1)
+       'Distance (KM)', 'Speed (KM/H)', 'Time from Pickup to Arrival'], axis=1)
 
 #Drop Speed (KM/H) column not in testing_df
 final_features = final_features.drop('Speed (KM/H)', axis=1)
 
 final_features.head()
-
-testing_df.head()
 
 
 
@@ -730,6 +470,7 @@ Advised to create validation set - use this for hyperparameter tuning
 
 #Drop ID columns for modeling
 final_features = final_features.drop(['Order No', 'Rider Id'], axis=1)
+print(list(final_features.columns))
 
 from sklearn.model_selection import train_test_split
 

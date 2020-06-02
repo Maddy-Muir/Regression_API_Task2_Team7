@@ -8,3 +8,4 @@ seaborn
 scipy
 sklearn
 IPython
+catboost

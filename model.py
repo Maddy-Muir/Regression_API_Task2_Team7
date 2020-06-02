@@ -59,6 +59,7 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
+   
     feature_vector_df = feature_vector_df.drop(['Vehicle Type', 'Temperature', 
                                                 'Precipitation in millimeters' ], 
                                                  axis = 1)
@@ -66,10 +67,11 @@ def _preprocess_data(data):
                                                  axis = 1)
 
     def dummy_encode_columns(input_df, column_name):
-        dummy_df = pd.get_dummies(input_df, columns = [column_name], drop_first = True)
+        dummy_df = pd.get_dummies(input_df, columns=[column_name], drop_first=True)
         return dummy_df
 
     feature_vector_df = dummy_encode_columns(feature_vector_df, 'Personal or Business')
+    print(feature_vector_df.columns)
 
     feature_vector_df = feature_vector_df.drop(['Placement - Weekday (Mo = 1)',
                                   'Confirmation - Weekday (Mo = 1)',
@@ -83,29 +85,6 @@ def _preprocess_data(data):
     
     testing_time_cols = ['Placement - Time', 'Confirmation - Time', 'Arrival at Pickup - Time', 
                       'Pickup - Time']
-
-    def haversine(lat1, lon1, lat2, lon2, to_radians = True, earth_radius = 6371):
-        """
-        Modified version: of http://stackoverflow.com/a/29546836/2901002
-
-        Calculate the great circle distance between two points
-        on the earth (specified in decimal degrees or in radians)
-
-        All (lat, lon) coordinates must have numeric dtypes and be of equal length.
-
-        """
-        if to_radians:
-            lat1, lon1, lat2, lon2 = np.radians([lat1, lon1, lat2, lon2])
-
-        a = np.sin((lat2-lat1)/2.0)**2 + \
-            np.cos(lat1) * np.cos(lat2) * np.sin((lon2-lon1)/2.0)**2
-
-        return earth_radius * 2 * np.arcsin(np.sqrt(a))
-
-    feature_vector_df['Distance'] = haversine(feature_vector_df['Pickup Lat'], 
-                                feature_vector_df['Pickup Long'],
-                                feature_vector_df['Destination Lat'], 
-                                feature_vector_df['Destination Long'])
 
     for time in testing_time_cols:
         feature_vector_df[time] = pd.to_datetime(feature_vector_df[time])
@@ -127,35 +106,23 @@ def _preprocess_data(data):
 
     feature_vector_df = feature_vector_df.drop(['Placement - Time', 'Confirmation - Time', 
                                 'Arrival at Pickup - Time', 'Pickup - Time'], axis = 1)
-    
+
+
     def extract_id(input_df):
         input_df['Rider Id'] = input_df['Rider Id'].str.extract(r"([0-9]+)").astype(int)
         return input_df
 
     extract_id(feature_vector_df)
 
-    feature_vector_df = feature_vector_df.drop(['Distance (KM)', 'No_of_Ratings', 'No_Of_Orders'], axis=1)
-    feature_vector_df = feature_vector_df.drop(['Order No', 'Rider Id'], axis=1)
+    print(list(feature_vector_df.columns))
 
-    from sklearn.preprocessing import MinMaxScaler
+    final_features = ['Order No', 'Pickup Lat', 'Pickup Long', 'Destination Lat', 'Destination Long',
+       'Rider Id', 'Age', 'Average_Rating','Personal or Business_Business',
+       'Time Difference - Placement to Confirmation',
+       'Time Difference - Arrival at Pickup to Pickup', 
+       'Distance (KM)']
 
-    mms = MinMaxScaler(feature_range=(0, 1))
-    mms.fit(feature_vector_df)
-    feature_vector_df = mms.transform(feature_vector_df)
-
-    #print(feature_vector_df.columns.tolist())
-
-    # predict_vector = feature_vector_df[['Pickup Lat',
-    #                                     'Pickup Long',
-    #                                     'Destination Lat',
-    #                                     'Destination Long',
-    #                                     'Age',
-    #                                     'Average_Rating',
-    #                                     'Personal or Business_Personal',
-    #                                     'Time Difference - Placement to Confirmation',
-    #                                     'Time Difference - Arrival at Pickup to Pickup',
-    #                                     'Distance']]
-    # ------------------------------------------------------------------------
+    feature_vector_df = feature_vector_df[final_features]
 
     return feature_vector_df
 
